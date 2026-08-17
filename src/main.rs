@@ -1,18 +1,18 @@
+use std::fs;
+
 use dioxus::prelude::*;
 
-#[derive(Debug, Clone, Routable, PartialEq)]
-#[rustfmt::skip]
-enum Route {
-    #[layout(Navbar)]
-    #[route("/")]
-    Home {},
-    #[route("/blog/:id")]
-    Blog { id: i32 },
-}
+use crate::{models::config_file::ConfigContext, route::Route};
+mod app;
+mod components;
+mod layouts;
+mod models;
+mod route;
+mod views;
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
-const MAIN_CSS: Asset = asset!("/assets/main.css");
-const HEADER_SVG: Asset = asset!("/assets/header.svg");
+const MAIN_CSS: Asset = asset!("/assets/main.scss");
+const CONFIG_PATH: &str = "config.toml";
 
 fn main()
 {
@@ -22,85 +22,37 @@ fn main()
 #[component]
 fn App() -> Element
 {
+	let cfg = use_context_provider(load_or_create_config_file);
+
 	rsx! {
 		document::Link { rel: "icon", href: FAVICON }
 		document::Link { rel: "stylesheet", href: MAIN_CSS }
-		Router::<Route> {}
-	}
-}
 
-#[component]
-pub fn Hero() -> Element
-{
-	rsx! {
-		div {
-			id: "hero",
-			img { src: HEADER_SVG, id: "header" }
-			div { id: "links",
-				a { href: "https://dioxuslabs.com/learn/0.7/", "📚 Learn Dioxus" }
-				a { href: "https://dioxuslabs.com/awesome", "🚀 Awesome Dioxus" }
-				a { href: "https://github.com/dioxus-community/", "📡 Community Libraries" }
-				a { href: "https://github.com/DioxusLabs/sdk", "⚙️ Dioxus Development Kit" }
-				a { href: "https://marketplace.visualstudio.com/items?itemName=DioxusLabs.dioxus", "💫 VSCode Extension" }
-				a { href: "https://discord.gg/XgGxMSkvUM", "👋 Community Discord" }
-			}
+		match cfg {
+			ConfigContext::Error(msg) => rsx!{
+				h1 { "Config Error" }
+				p { {msg} }
+			},
+			ConfigContext::Config(_) => rsx! {Router::<Route> {}},
 		}
 	}
 }
 
-/// Home page
-#[component]
-fn Home() -> Element
+fn load_or_create_config_file() -> ConfigContext
 {
-	rsx! {
-		Hero {}
-
-	}
-}
-
-/// Blog page
-#[component]
-pub fn Blog(id: i32) -> Element
-{
-	rsx! {
-		div {
-			id: "blog",
-
-			// Content
-			h1 { "This is blog #{id}!" }
-			p { "In blog #{id}, we show how the Dioxus router works and how URL parameters can be passed as props to our route components." }
-
-			// Navigation links
-			Link {
-				to: Route::Blog { id: id - 1 },
-				"Previous"
+	match fs::exists(CONFIG_PATH)
+	{
+		Ok(exists) =>
+		{
+			if !exists && let Err(err) = fs::write(CONFIG_PATH, "media_dirs = []")
+			{
+				ConfigContext::Error(format!("Failed to create config file: {}", err))
 			}
-			span { " <---> " }
-			Link {
-				to: Route::Blog { id: id + 1 },
-				"Next"
+			else
+			{
+				ConfigContext::from_file_path(CONFIG_PATH)
 			}
 		}
-	}
-}
-
-/// Shared navbar component.
-#[component]
-fn Navbar() -> Element
-{
-	rsx! {
-		div {
-			id: "navbar",
-			Link {
-				to: Route::Home {},
-				"Home"
-			}
-			Link {
-				to: Route::Blog { id: 1 },
-				"Blog"
-			}
-		}
-
-		Outlet::<Route> {}
+		Err(err) => ConfigContext::Error(format!("Failed to read config path: {}", err)),
 	}
 }
