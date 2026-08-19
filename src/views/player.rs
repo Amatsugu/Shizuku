@@ -7,12 +7,10 @@ use crate::{models::config_file::ConfigContext, route::Route};
 
 #[component]
 pub fn Player() -> Element {
-	let config = use_context::<ConfigContext>();
-	let dirs = match config {
-		ConfigContext::Error(_) => Vec::default(),
-		ConfigContext::Config(config_file) => config_file.media_dirs.clone(),
-	};
-	let dirs = use_resource(use_reactive!(|(dirs)| async move { scan_dirs(dirs).await }));
+	let config = use_context::<ConfigContext>().config;
+	let dirs = use_resource(use_reactive!(|(config)| async move {
+		scan_dirs(config.cloned().media_dirs).await
+	}));
 	match dirs() {
 		Some(dirs) => rsx! {
 			p {"Found {dirs.len()} files" }
