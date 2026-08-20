@@ -8,6 +8,7 @@ use crate::CONFIG_PATH;
 #[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq)]
 pub struct ConfigFile {
 	pub media_dirs: Vec<String>,
+	pub mpv_path: Option<String>,
 }
 
 impl ConfigFile {
