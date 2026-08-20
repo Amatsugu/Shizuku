@@ -9,6 +9,25 @@ use crate::CONFIG_PATH;
 pub struct ConfigFile {
 	pub media_dirs: Vec<String>,
 	pub mpv_path: Option<String>,
+	pub last_server: Option<String>,
+	pub servers: Vec<Server>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct Server {
+	pub name: String,
+	pub host: String,
+	pub password: Option<String>,
+}
+
+impl Default for Server {
+	fn default() -> Self {
+		Self {
+			name: "New Server".into(),
+			host: Default::default(),
+			password: Default::default(),
+		}
+	}
 }
 
 impl ConfigFile {

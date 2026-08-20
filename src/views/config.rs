@@ -2,7 +2,10 @@ use dioxus::prelude::*;
 
 use crate::{
 	CONFIG_PATH,
-	components::basic::{Button, Input, InputValue},
+	components::{
+		ServersEditor,
+		basic::{Button, Input, InputValue},
+	},
 	models::config_file::ConfigContext,
 };
 
@@ -15,6 +18,7 @@ pub fn Config() -> Element {
 	rsx! {
 		div {
 			class: "configForm",
+			h2 { "Media Player" }
 			Input {
 				label: "MPV path",
 				name: "mpv_path",
@@ -30,6 +34,7 @@ pub fn Config() -> Element {
 					}
 				}
 			}
+			h2 { "Media Files" }
 			label {
 				"Media Directoies"
 				textarea {
@@ -41,7 +46,7 @@ pub fn Config() -> Element {
 					value : dirs_text()
 				}
 			}
-
+			ServersEditor {}
 			div {
 				class: "buttonRow",
 				Button {
