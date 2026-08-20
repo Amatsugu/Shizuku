@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::{models::config_file::ConfigContext, route::Route};
+use crate::{components::basic::Button, models::config_file::ConfigContext, route::Route};
 mod app;
 mod components;
 mod layouts;
@@ -18,7 +18,7 @@ fn main() {
 
 #[component]
 fn App() -> Element {
-	let cfg = use_context_provider(ConfigContext::load_or_create_config_file);
+	let mut cfg = use_context_provider(ConfigContext::load_or_create_config_file);
 
 	rsx! {
 		document::Link { rel: "icon", href: FAVICON }
@@ -28,6 +28,12 @@ fn App() -> Element {
 			models::config_file::ConfigLoadState::Failed(msg) => rsx!{
 				h1 { "Config Error" }
 				p { {msg} }
+				Button {
+					onclick: move |_|{
+						cfg.reload_config();
+					},
+					"Reload Config"
+				}
 			},
 			models::config_file::ConfigLoadState::Loaded => rsx! {Router::<Route> {}},
 		}

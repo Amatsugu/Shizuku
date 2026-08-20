@@ -17,6 +17,12 @@ impl ConfigFile {
 		toml::from_str::<ConfigFile>(&data)
 			.map_err(|e| format!("Failed to parse config file: {}", e))
 	}
+
+	pub fn save_config<P: AsRef<Path>>(&self, path: P) -> Result<(), String> {
+		let data = toml::to_string(self).map_err(|e| e.to_string())?;
+		fs::write(path, data).map_err(|e| e.to_string())?;
+		Ok(())
+	}
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -50,15 +56,15 @@ impl ConfigContext {
 		ConfigFile::load_config(CONFIG_PATH)
 	}
 
-	pub fn from_file_path<P: AsRef<Path>>(path: P) -> Self {
-		match ConfigFile::load_config(path) {
-			Ok(cfg) => Self {
-				config: Signal::new(cfg),
-				load_state: Signal::new(ConfigLoadState::Loaded),
-			},
-			Err(err) => Self::from_err_string(err),
-		}
-	}
+	// pub fn from_file_path<P: AsRef<Path>>(path: P) -> Self {
+	// 	match ConfigFile::load_config(path) {
+	// 		Ok(cfg) => Self {
+	// 			config: Signal::new(cfg),
+	// 			load_state: Signal::new(ConfigLoadState::Loaded),
+	// 		},
+	// 		Err(err) => Self::from_err_string(err),
+	// 	}
+	// }
 
 	pub fn from_err_string(err: String) -> Self {
 		Self {
@@ -69,7 +75,10 @@ impl ConfigContext {
 
 	pub fn reload_config(&mut self) {
 		match Self::load_or_create_config() {
-			Ok(cfg) => self.config.set(cfg),
+			Ok(cfg) => {
+				self.config.set(cfg);
+				self.load_state.set(ConfigLoadState::Loaded);
+			}
 			Err(err) => self.load_state.set(ConfigLoadState::Failed(err)),
 		}
 	}

@@ -1,6 +1,33 @@
 body {
-    background-color: #0f1116;
-    color: #ffffff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 20px;
+	background-color: #0f1116;
+	color: #ffffff;
+	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+	margin: 20px;
+}
+
+.configForm {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.buttonRow {
+	display: flex;
+	flex-direction: row;
+	justify-content: stretch;
+	align-items: stretch;
+	gap: 5px;
+
+	> * {
+		flex-grow: 1;
+	}
+}
+
+label {
+	display: flex;
+	flex-direction: column;
+}
+
+textarea {
+	min-height: 200px;
 }
