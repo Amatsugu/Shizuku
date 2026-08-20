@@ -11,6 +11,7 @@ pub enum Route {
     Home {},
     #[route("/config")]
     Config {},
+    #[end_layout]
     #[layout(PlayerLayout)]
     #[route("/player")]
     Player {}

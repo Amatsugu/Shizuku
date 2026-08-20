@@ -6,10 +6,11 @@ use crate::{
 };
 
 #[component]
-pub fn ServersEditor() -> Element {
+pub fn ServersEditor() -> Element
+{
 	let ctx = use_context::<ConfigContext>();
+	let servers = use_memo(move || ctx.config.cloned().servers);
 	let mut cfg = ctx.config;
-	let servers = use_memo(move || cfg.cloned().servers);
 	let servers = servers();
 	rsx! {
 		h2 { "Servers" }
@@ -24,8 +25,12 @@ pub fn ServersEditor() -> Element {
 						c.servers.remove(idx);
 						cfg.set(c);
 					},
-					on_update: |(idx, server)|{
-
+					on_update: move |(idx, server)|{
+						let mut c = cfg.cloned();
+						if c.servers.len() > idx{
+							c.servers[idx] = server;
+							cfg.set(c);
+						}
 					}
 				}
 			})}
@@ -48,32 +53,45 @@ fn ServerEditor(
 	index: usize,
 	on_remove: EventHandler<usize>,
 	on_update: EventHandler<(usize, Server)>,
-) -> Element {
+) -> Element
+{
 	rsx! {
 		div {
 			class:"serverEditor",
 			div{
 				class: "titleBar",
-				span { "Server: {server.name}" }
+				span { "Server: {server.name.clone()}" }
 				Button { onclick: move |_| on_remove.call(index), "x" }
 			}
 			Input{
-				value: InputValue::Const(server.name),
+				value: InputValue::Const(server.name.clone()),
 				name: "name",
 				label: "Name",
 				required: true,
+				oninput: {
+					let server = server.clone();
+					move |e: Event<FormData>| on_update.call((index, Server{ name: e.value(), ..server.clone() }))
+				}
 			}
 			Input{
-				value: InputValue::Const(server.host),
+				value: InputValue::Const(server.host.clone()),
 				name: "host",
 				label: "Host",
-				required: true
+				required: true,
+				oninput: {
+					let server = server.clone();
+					move |e: Event<FormData>| on_update.call((index, Server{ host: e.value(), ..server.clone() }))
+				}
 			}
 			Input{
-				value: InputValue::Const(server.password.unwrap_or_default()),
+				value: InputValue::Const(server.password.clone().unwrap_or_default()),
 				name: "password",
 				label: "Passowrd",
-				type: "password"
+				type: "password",
+				oninput: {
+					let server = server.clone();
+					move |e: Event<FormData>| on_update.call((index, Server{ password: if e.value().is_empty() { None }else{ Some(e.value()) }, ..server.clone() }))
+				}
 			}
 		}
 	}

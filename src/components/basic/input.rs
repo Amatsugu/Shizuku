@@ -1,7 +1,8 @@
 use dioxus::prelude::*;
 
 #[derive(PartialEq, Clone, Props)]
-pub struct InputProps {
+pub struct InputProps
+{
 	pub r#type: Option<String>,
 	pub value: Option<InputValue>,
 	pub label: Option<String>,
@@ -12,14 +13,34 @@ pub struct InputProps {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum InputValue {
+pub enum InputValue
+{
 	Const(String),
 	Signal(Signal<String>),
 }
 
-impl InputValue {
-	pub fn value(&self) -> String {
-		match self {
+impl From<String> for InputValue
+{
+	fn from(value: String) -> Self
+	{
+		InputValue::Const(value)
+	}
+}
+
+impl From<Signal<String>> for InputValue
+{
+	fn from(value: Signal<String>) -> Self
+	{
+		InputValue::Signal(value)
+	}
+}
+
+impl InputValue
+{
+	pub fn value(&self) -> String
+	{
+		match self
+		{
 			InputValue::Const(val) => val.clone(),
 			InputValue::Signal(signal) => signal.cloned(),
 		}
@@ -27,8 +48,9 @@ impl InputValue {
 }
 
 #[component]
-pub fn Input(props: InputProps) -> Element {
-	let label = props.label.unwrap_or("".into());
+pub fn Input(props: InputProps) -> Element
+{
+	let label = props.label.unwrap_or_default();
 	let mut val = props.value.clone();
 	let ph = props.placeholder.unwrap_or(label.clone());
 	rsx! {
