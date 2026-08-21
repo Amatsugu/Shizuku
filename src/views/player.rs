@@ -3,15 +3,35 @@ use std::path::PathBuf;
 use dioxus::prelude::*;
 use jwalk::WalkDir;
 
-use crate::{models::config_file::ConfigContext, route::Route};
+use crate::{
+	models::{
+		config_file::ConfigContext,
+		toasts::{ToastCommand, ToastLevel, ToastsContext},
+	},
+	route::Route,
+};
 
 #[component]
-pub fn Player() -> Element {
+pub fn Player() -> Element
+{
 	let config = use_context::<ConfigContext>().config;
+	let toast_ctx = use_context::<ToastsContext>();
+	use_effect(move || {
+		if config().mpv_path.is_none()
+		{
+			toast_ctx.handle.send(ToastCommand::Push {
+				title: "MPV path not set".into(),
+				message: Some("MPV path is not set, media playback will be skipped.".into()),
+				level: ToastLevel::Warning,
+			});
+		}
+	});
+
 	let dirs = use_resource(use_reactive!(|(config)| async move {
 		scan_dirs(config.cloned().media_dirs).await
 	}));
-	match dirs() {
+	match dirs()
+	{
 		Some(dirs) => rsx! {
 			p {"Found {dirs.len()} files" }
 			Link{
@@ -25,7 +45,8 @@ pub fn Player() -> Element {
 
 const MEDIA_TYPES: &[&str] = &["mp4", "mkv", "mov", "webm", "avi"];
 
-async fn scan_dirs(media_dirs: Vec<String>) -> Vec<PathBuf> {
+async fn scan_dirs(media_dirs: Vec<String>) -> Vec<PathBuf>
+{
 	tokio::task::spawn_blocking(move || {
 		media_dirs
 			.iter()
@@ -38,7 +59,9 @@ async fn scan_dirs(media_dirs: Vec<String>) -> Vec<PathBuf> {
 						&& MEDIA_TYPES.contains(&ext)
 					{
 						Some(entry.path())
-					} else {
+					}
+					else
+					{
 						None
 					}
 				})

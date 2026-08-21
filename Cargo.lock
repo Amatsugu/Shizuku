@@ -4755,6 +4755,7 @@ name = "shizuku"
 version = "0.1.0"
 dependencies = [
  "dioxus",
+ "futures-util",
  "jwalk",
  "serde",
  "serde_toml",

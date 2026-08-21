@@ -91,16 +91,6 @@ impl ConfigContext
 		ConfigFile::load_config(CONFIG_PATH)
 	}
 
-	// pub fn from_file_path<P: AsRef<Path>>(path: P) -> Self {
-	// 	match ConfigFile::load_config(path) {
-	// 		Ok(cfg) => Self {
-	// 			config: Signal::new(cfg),
-	// 			load_state: Signal::new(ConfigLoadState::Loaded),
-	// 		},
-	// 		Err(err) => Self::from_err_string(err),
-	// 	}
-	// }
-
 	pub fn from_err_string(err: String) -> Self
 	{
 		Self {

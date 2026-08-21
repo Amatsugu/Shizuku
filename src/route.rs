@@ -1,11 +1,12 @@
 use dioxus::prelude::*;
 
-use crate::layouts::{MainLayout, PlayerLayout};
+use crate::layouts::{MainLayout, PlayerLayout, ToastsLayout};
 use crate::views::*;
 
 #[derive(Debug, Clone, Routable, PartialEq)]
 #[rustfmt::skip]
 pub enum Route {
+	#[layout(ToastsLayout)]
     #[layout(MainLayout)]
     #[route("/")]
     Home {},

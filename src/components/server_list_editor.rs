@@ -1,7 +1,10 @@
 use dioxus::prelude::*;
 
 use crate::{
-	components::basic::{Button, ButtonVariant, Input, InputValue},
+	components::{
+		basic::{Button, ButtonVariant, Input, InputValue},
+		icons::Cross,
+	},
 	models::config_file::{ConfigContext, Server},
 };
 
@@ -21,9 +24,7 @@ pub fn ServersEditor() -> Element
 					index,
 					server: server.clone(),
 					on_remove: move |idx|{
-						let mut c = cfg.cloned();
-						c.servers.remove(idx);
-						cfg.set(c);
+						cfg.write().servers.remove(idx);
 					},
 					on_update: move |(idx, server)|{
 						let mut c = cfg.cloned();
@@ -38,9 +39,7 @@ pub fn ServersEditor() -> Element
 		Button{
 			variant: ButtonVariant::Muted,
 			onclick: move |_|{
-				let mut c = cfg.cloned();
-				c.servers.push(Server::default());
-				cfg.set(c);
+				cfg.write().servers.push(Server::default());
 			},
 			"Add Server"
 		}
@@ -61,7 +60,7 @@ fn ServerEditor(
 			div{
 				class: "titleBar",
 				span { "Server: {server.name.clone()}" }
-				Button { onclick: move |_| on_remove.call(index), "x" }
+				Button { onclick: move |_| on_remove.call(index), Cross {} }
 			}
 			Input{
 				value: InputValue::Const(server.name.clone()),
@@ -86,7 +85,7 @@ fn ServerEditor(
 			Input{
 				value: InputValue::Const(server.password.clone().unwrap_or_default()),
 				name: "password",
-				label: "Passowrd",
+				label: "Password",
 				type: "password",
 				oninput: {
 					let server = server.clone();

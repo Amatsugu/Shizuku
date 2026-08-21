@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use dioxus::prelude::*;
 
 use crate::{
@@ -6,13 +8,18 @@ use crate::{
 		ServersEditor,
 		basic::{Button, Input, InputValue},
 	},
-	models::config_file::ConfigContext,
+	models::{
+		config_file::ConfigContext,
+		toasts::{ToastCommand, ToastLevel, ToastsContext},
+	},
 };
 
 #[component]
-pub fn Config() -> Element {
+pub fn Config() -> Element
+{
 	let mut ctx = use_context::<ConfigContext>();
 	let mut cfg = ctx.config;
+	let toast_ctx = use_context::<ToastsContext>();
 	let dirs_text = use_memo(move || cfg.cloned().media_dirs.join("\n"));
 	let mpv_path = use_memo(move || cfg.cloned().mpv_path.unwrap_or_default());
 	rsx! {
@@ -36,7 +43,7 @@ pub fn Config() -> Element {
 			}
 			h2 { "Media Files" }
 			label {
-				"Media Directoies"
+				"Media Directories"
 				textarea {
 					oninput: move |e|{
 						let mut cur_cfg = cfg.cloned();
@@ -51,7 +58,11 @@ pub fn Config() -> Element {
 				class: "buttonRow",
 				Button {
 					onclick: move |_|{
-						_ = cfg.cloned().save_config(CONFIG_PATH);
+						if let Err(err) = cfg.cloned().save_config(CONFIG_PATH){
+							toast_ctx.handle.send(ToastCommand::Push { title: "Failed to Save Config".into(), message: Some(err), level: ToastLevel::Error });
+						}else{
+							toast_ctx.handle.send(ToastCommand::PushWithDuration { title: "Config saved".into(), message: None, level: ToastLevel::Info, duration: Duration::from_secs(5) });
+						}
 					},
 					"Save"
 				}
@@ -59,6 +70,7 @@ pub fn Config() -> Element {
 				Button {
 					onclick: move |_|{
 						ctx.reload_config();
+						toast_ctx.handle.send(ToastCommand::PushWithDuration { title: "Config reloaded".into(), message: None, level: ToastLevel::Info, duration: Duration::from_secs(5) });
 					},
 					"Reload Config"
 				}
