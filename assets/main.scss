@@ -276,3 +276,24 @@ textarea {
 		max-height: 0;
 	}
 }
+
+
+.fileDropZone{
+	display: grid;
+	grid-template-areas: "A";
+
+	> input{
+		display: none;
+		opacity: 0;
+	}
+
+	> * {
+		grid-area: A;
+	}
+
+	&.dragging{
+		> input{
+			display: flex;
+		}
+	}
+}

@@ -1,7 +1,9 @@
 pub mod basic;
+mod file_drop;
 pub mod icons;
 mod navbar;
 mod server_list_editor;
 pub mod toasts;
+pub use file_drop::*;
 pub use navbar::NavBar;
 pub use server_list_editor::*;
