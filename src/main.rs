@@ -12,12 +12,14 @@ const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.scss");
 pub const CONFIG_PATH: &str = "config.toml";
 
-fn main() {
+fn main()
+{
 	dioxus::launch(App);
 }
 
 #[component]
-fn App() -> Element {
+fn App() -> Element
+{
 	let mut cfg = use_context_provider(ConfigContext::load_or_create_config_file);
 
 	rsx! {
@@ -35,7 +37,9 @@ fn App() -> Element {
 					"Reload Config"
 				}
 			},
-			models::config_file::ConfigLoadState::Loaded => rsx! {Router::<Route> {}},
+			models::config_file::ConfigLoadState::Loaded => rsx! {
+				Router::<Route> {}
+			},
 		}
 	}
 }

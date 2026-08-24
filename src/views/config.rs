@@ -35,7 +35,8 @@ pub fn Config() -> Element
 					let val = e.value();
 					if val.is_empty() {
 						c.mpv_path = None;
-					}else
+					}
+					else
 					{
 						c.mpv_path = Some(val);
 					}

@@ -1,115 +1,93 @@
-use std::{env, fs, path::PathBuf};
+use std::time::Duration;
 
 use dioxus::prelude::*;
-use jwalk::WalkDir;
 
 use crate::{
-	app::playback::start_mpv,
-	components::FileDropZone,
+	app::{
+		file_scanner::scan_dirs,
+		playback::{get_mpv_path, init_player_context},
+	},
+	components::player::{PlayerControls, Playlist, UserList},
 	models::{
-		config_file::ConfigContext,
-		player_context::PlayerCommand,
-		toasts::{ToastCommand, ToastLevel, ToastsContext},
+		config_file::{ConfigContext, ConfigFile},
+		player_context::{PlayerContext, PlayerData},
+		playlist::{MediaMetadata, PlaylistItem},
 	},
 	route::Route,
 };
+
+const PLAYER_CSS: Asset = asset!("/assets/player.scss");
 
 #[component]
 pub fn Player() -> Element
 {
 	let config = use_context::<ConfigContext>().config;
 	let mpv_path = use_memo(move || get_mpv_path(config().mpv_path));
-	let toast_ctx = use_context::<ToastsContext>();
 
-	let player_ctx = start_mpv(mpv_path);
+	let player_ctx = init_player_context(mpv_path);
 	let player_ctx = use_context_provider(|| player_ctx);
+
+	init_file_scan(config, player_ctx.data);
 	use_effect(move || {
-		if !player_ctx.is_running.cloned()
+		if !player_ctx.data.is_running.cloned()
 		{
 			navigator().push(Route::Home {});
 		}
 	});
 
-	let dirs = use_resource(use_reactive!(|(config)| async move {
+	rsx! {
+		document::Link { rel: "stylesheet", href: PLAYER_CSS }
+		div{
+			id: "player",
+			PlayerControls{}
+			UserList{}
+			Playlist{}
+		}
+	}
+}
+
+fn init_file_scan(config: Signal<ConfigFile>, mut player_data: PlayerData)
+{
+	let files = use_resource(use_reactive!(|(config)| async move {
 		scan_dirs(config.cloned().media_dirs).await
 	}));
-	match dirs()
-	{
-		Some(dirs) => rsx! {
-			p {"Found {dirs.len()} files" }
-			Link{
-				to: Route::Home {  },
-				"Back"
-			}
 
-			FileDropZone{
-				ondrop: move |path|{
-					player_ctx.handle.send(PlayerCommand::OpenFile(path));
-				},
-				div{
-					"Drop files here"
-				}
-			}
-		},
-		None => rsx! {"Scanning dirs"},
-	}
-}
-
-const MEDIA_TYPES: &[&str] = &["mp4", "mkv", "mov", "webm", "avi"];
-
-async fn scan_dirs(media_dirs: Vec<String>) -> Vec<PathBuf>
-{
-	tokio::task::spawn_blocking(move || {
-		media_dirs
-			.iter()
-			.flat_map(|media_dir| {
-				WalkDir::new(media_dir).into_iter().filter_map(|e| {
-					if let Ok(entry) = e
-						&& entry.file_type.is_file()
-						&& let Some(ext) = entry.path().extension()
-						&& let Some(ext) = ext.to_str()
-						&& MEDIA_TYPES.contains(&ext)
-					{
-						Some(entry.path())
-					}
-					else
-					{
-						None
-					}
-				})
-			})
-			.collect()
-	})
-	.await
-	.unwrap_or_default()
-}
-
-fn get_mpv_path(configured_path: Option<String>) -> Result<PathBuf, String>
-{
-	if let Some(path) = configured_path
-		&& !path.is_empty()
-		&& fs::exists(path.clone()).map_err(|e| e.to_string())?
-	{
-		Ok(path.into())
-	}
-	else
-	{
-		if let Some(path) = env::var_os("PATH").and_then(|p| {
-			env::split_paths(&p).find_map(|dir| {
-				#[cfg(not(windows))]
-				const PROGRAM: &str = "mpv";
-				#[cfg(windows)]
-				const PROGRAM: &str = "mpv.exe";
-				let path = dir.join(PROGRAM);
-				if path.is_file() { Some(path) } else { None }
-			})
-		})
-		{
-			Ok(path)
-		}
+	use_effect(move || {
+		let Some(files) = files()
 		else
 		{
-			Err("mpv not found in PATH".into())
+			return;
+		};
+		let mut playlist = player_data.playlist.cloned();
+		for itm in &mut playlist
+		{
+			if let PlaylistItem::Unloaded { key } = itm
+			{
+				match files.iter().find(|dir| {
+					dir.file_name()
+						.map(|f| f.eq_ignore_ascii_case(&key))
+						.unwrap_or_default()
+				})
+				{
+					Some(path) => match MediaMetadata::probe_metadata(path)
+					{
+						Ok(meta) => *itm = PlaylistItem::Loaded { key: key.clone(), meta },
+						Err(err) =>
+						{
+							*itm = PlaylistItem::Loaded {
+								key: key.clone(),
+								meta: MediaMetadata {
+									duration: Duration::from_secs(0),
+									path: path.clone(),
+								},
+							};
+							error!("Failed to probe duration: {}", err);
+						}
+					},
+					None => *itm = PlaylistItem::NotFound { key: key.clone() },
+				}
+			}
 		}
-	}
+		player_data.playlist.set(playlist);
+	});
 }

@@ -1,0 +1,41 @@
+@import "theme.scss";
+
+body:has(#player){
+	margin: 0;
+	padding: 0;
+}
+
+#player{
+	display: grid;
+	grid-template-areas: "Users" "Playlist" "Controls";
+	grid-template-rows: 40px 1fr 30px;
+	height: 100mvh;
+	width: 100mvw;
+
+	#users{
+		grid-area: Users;
+	}
+
+	#playerControls{
+		grid-area: Controls;
+	}
+
+	#playlist{
+		grid-area: Playlist;
+	}
+}
+
+
+#playlist{
+	display: grid;
+
+	> .list{
+		display: flex;
+		flex-direction: column;
+		overflow-y: auto;
+
+		.playlistItem{
+			background-color: $mainColor;
+		}
+	}
+}

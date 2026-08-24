@@ -5,7 +5,7 @@ use dioxus::{html::HasFileData, prelude::*};
 use crate::models::toasts::{ToastCommand, ToastLevel, ToastsContext};
 
 #[component]
-pub fn FileDropZone(children: Element, ondrop: Callback<String>) -> Element
+pub fn FileDropZone(children: Element, ondrop: Callback<Vec<String>>) -> Element
 {
 	let mut is_dragging = use_signal(|| false);
 	let on_drag_enter = move |_| {
@@ -16,19 +16,21 @@ pub fn FileDropZone(children: Element, ondrop: Callback<String>) -> Element
 	let on_files_dropped = move |e: Event<DragData>| {
 		e.prevent_default();
 
-		if let Some(first) = e.files().first()
+		let files: Vec<String> = e.files().iter().filter_map(|f| f.path().into_string().ok()).collect();
+		if !files.is_empty()
 		{
-			match first.path().into_string()
-			{
-				Ok(path) => ondrop.call(path),
-				Err(_) => toasts_ctx.handle.send(ToastCommand::PushWithDuration {
-					title: "File drop failed".into(),
-					message: None,
-					level: ToastLevel::Error,
-					duration: Duration::from_secs(5),
-				}),
-			}
+			ondrop.call(files);
 		}
+		else
+		{
+			toasts_ctx.handle.send(ToastCommand::PushWithDuration {
+				title: "File drop failed".into(),
+				message: None,
+				level: ToastLevel::Error,
+				duration: Duration::from_secs(5),
+			});
+		}
+
 		is_dragging.set(false);
 	};
 

@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use serde::Serialize;
 
 #[derive(Default, Serialize)]
@@ -9,12 +11,13 @@ pub struct MpvCommand
 
 impl MpvCommand
 {
-	pub fn load_file(path: String) -> Self
+	pub fn load_file<T: AsRef<Path>>(path: T) -> Option<Self>
 	{
-		MpvCommand {
-			command: vec!["loadfile".into(), path],
+		let path = path.as_ref().to_str()?;
+		Some(MpvCommand {
+			command: vec!["loadfile".into(), path.to_string()],
 			..Default::default()
-		}
+		})
 	}
 
 	pub fn pause() -> Self

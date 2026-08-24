@@ -1,26 +1,4 @@
-$backgroundColor: #212322;
-$panelBackgroundColor: #454a47;
-$featureColor: #e1e7ee;
-$mainTextColor: $featureColor;
-$invertTextColor: $backgroundColor;
-$mainColorDark: #de432b;
-$mainColor: #e04f39;
-$mainColorBright: #e3624f;
-$secondaryColorDark: #c0a321;
-$secondaryColor: #cfb023;
-$secondaryColorBright: #dcbc2e;
-$inputBackground: #c9c5ba;
-$inputPlaceholderColor: #89816c;
-$shadowColor: rgba(0, 0, 0, 0.5);
-
-$panelShadow: 5px 2px 10px 1px $shadowColor;
-$inputShadow: 2px 1px 5px 1px $shadowColor;
-$inputRadius: 10px;
-$inputPadding: 8px 10px;
-
-$infoToastColor: #eee;
-$warnToastColor: #fa0;
-$errorToastColor: #f10;
+@import "theme.scss";
 
 body {
 	background-color: $backgroundColor;

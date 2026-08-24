@@ -1,22 +1,56 @@
 use futures_util::stream::StreamExt;
-use std::{path::PathBuf, time::Duration};
+use std::{env, fs, path::PathBuf, time::Duration};
 use tokio::time::interval;
 
 use dioxus::prelude::*;
 
 use crate::{
-	app::mpv::Mpv,
+	app::{mpv::Mpv, mpv_read::handle_mpv_read, playback_commands::handle_playback_commands},
 	models::{
-		mpv::{commands::MpvCommand, responses::MpvMessage},
-		player_context::{PlayerCommand, PlayerContext},
-		toasts::{ToastCommand, ToastLevel, ToastsContext},
+		player_context::{PlayerCommand, PlayerContext, PlayerData},
+		toasts::{ToastCommand, ToastsContext},
 	},
 };
 
-pub fn start_mpv(mpv_path: Memo<Result<PathBuf, String>>) -> PlayerContext
+pub fn get_mpv_path(configured_path: Option<String>) -> Result<PathBuf, String>
+{
+	if let Some(path) = configured_path
+		&& !path.is_empty()
+		&& fs::exists(path.clone()).map_err(|e| e.to_string())?
+	{
+		Ok(path.into())
+	}
+	else
+	{
+		if let Some(path) = env::var_os("PATH").and_then(|p| {
+			env::split_paths(&p).find_map(|dir| {
+				#[cfg(not(windows))]
+				const PROGRAM: &str = "mpv";
+				#[cfg(windows)]
+				const PROGRAM: &str = "mpv.exe";
+				let path = dir.join(PROGRAM);
+				if path.is_file() { Some(path) } else { None }
+			})
+		})
+		{
+			Ok(path)
+		}
+		else
+		{
+			Err("mpv not found in PATH".into())
+		}
+	}
+}
+
+pub fn init_player_context(mpv_path: Memo<Result<PathBuf, String>>) -> PlayerContext
 {
 	let toasts_ctx = use_context::<ToastsContext>();
-	let mut is_running = use_signal(|| true);
+	let mut data = PlayerData {
+		is_running: use_signal(|| true),
+		playlist: use_signal(Vec::new),
+		users: use_signal(Vec::new),
+		selected_file: use_signal(|| None),
+	};
 	let handle = use_coroutine(move |mut rx: dioxus::prelude::UnboundedReceiver<PlayerCommand>| {
 		let mpv_path = mpv_path.cloned();
 		async move {
@@ -53,32 +87,16 @@ pub fn start_mpv(mpv_path: Memo<Result<PathBuf, String>>) -> PlayerContext
 			{
 				tokio::select! {
 					Some(cmd) = rx.next() => {
-						let result = match cmd {
-							PlayerCommand::OpenFile(path) => mpv.open_file(path).await,
-							PlayerCommand::Play => mpv.send_command(MpvCommand::play()).await,
-							PlayerCommand::Pause => mpv.send_command(MpvCommand::pause()).await,
-							PlayerCommand::Seek(time) => mpv.send_command(MpvCommand::seek(time)).await,
-						};
-						if let Err(err) = result {
-							toasts_ctx.handle.send(ToastCommand::PushWithDuration { title: "Failed to communicate with mpv".into(), message: Some(err.to_string()), level: ToastLevel::Error, duration: Duration::from_secs(5) });
-						}
+						handle_playback_commands(cmd, &mut mpv, toasts_ctx, data).await
 					}
 					result = mpv.read.next_line() =>{
-						match result {
-							Ok(Some(line)) => {
-								let _reply = MpvMessage::parse(line);
-							},
-							Ok(None) => {}
-							Err(err) => {
-								error!("Failed to read mpv stream: {}", err);
-							},
-						}
+						handle_mpv_read(result);
 					}
 					_ = health_check.tick() => {
 						if !mpv.is_running()
 						{
 							info!("No longer running");
-							is_running.set(false);
+							data.is_running.set(false);
 							break;
 						}
 					}
@@ -86,5 +104,5 @@ pub fn start_mpv(mpv_path: Memo<Result<PathBuf, String>>) -> PlayerContext
 			}
 		}
 	});
-	PlayerContext { handle, is_running }
+	PlayerContext { handle, data }
 }

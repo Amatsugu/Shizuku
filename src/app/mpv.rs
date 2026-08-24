@@ -1,5 +1,5 @@
 use std::{
-	path::PathBuf,
+	path::{Path, PathBuf},
 	process::{Child, Command},
 	thread,
 	time::Duration,
@@ -7,11 +7,9 @@ use std::{
 
 use interprocess::local_socket::{
 	GenericFilePath, ToFsName,
-	prelude::*,
 	tokio::{RecvHalf, SendHalf, Stream},
 	traits::tokio::Stream as StreamTrait,
 };
-use serde::Serialize;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, Lines};
 
 use crate::models::mpv::commands::MpvCommand;
@@ -86,16 +84,16 @@ impl Mpv
 
 	pub fn is_running(&mut self) -> bool
 	{
-		match self.process.0.try_wait()
-		{
-			Ok(None) => true,
-			_ => false,
-		}
+		matches!(self.process.0.try_wait(), Ok(None))
 	}
 
-	pub async fn open_file<T: Into<String>>(&mut self, path: T) -> Result<(), String>
+	pub async fn open_file<T: AsRef<Path>>(&mut self, path: T) -> Result<(), String>
 	{
-		let cmd = MpvCommand::load_file(path.into());
+		let Some(cmd) = MpvCommand::load_file(path)
+		else
+		{
+			return Err("Failed to create load file command, invalid path".into());
+		};
 		self.send_command(cmd).await
 	}
 
@@ -114,6 +112,7 @@ fn spawn_mpv(path: PathBuf) -> std::io::Result<Child>
 {
 	Command::new(path)
 		.arg("--idle")
+		.arg("--keep-open=yes")
 		.arg(format!("--input-ipc-server={}", IPC_PATH))
 		.spawn()
 }
