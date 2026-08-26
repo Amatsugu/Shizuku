@@ -3,17 +3,19 @@ use std::time::Duration;
 use dioxus::prelude::*;
 
 use crate::{
-	components::FileDropZone,
+	components::{FileDropZone, drag_and_drop_list::DragAndDropList},
 	models::{
 		player_context::{PlayerCommand, PlayerContext},
 		playlist::PlaylistItem,
 	},
 };
+const DX_THEME: Asset = asset!("/assets/dx-components-theme.css");
 
 #[component]
 pub fn Playlist() -> Element {
 	let player_ctx = use_context::<PlayerContext>();
 	rsx! {
+		document::Link{href: DX_THEME, rel: "stylesheet"}
 		div{
 			id: "playlist",
 			FileDropZone{
@@ -32,42 +34,56 @@ pub fn Playlist() -> Element {
 fn ItemList(items: Vec<PlaylistItem>) -> Element {
 	let player_ctx = use_context::<PlayerContext>();
 	let mut dragging = use_signal(|| Option::<usize>::None);
+	let items: Vec<Element> = items
+		.iter()
+		.enumerate()
+		.map(|(idx, item)| {
+			let selected = player_ctx
+				.data
+				.selected_file
+				.cloned()
+				.map(|s| s == idx)
+				.unwrap_or_default();
+			rsx! {
+				Item { key: "{item.key()}", item: item.clone(), selected }
+			}
+		})
+		.collect();
 	rsx! {
 		div{
 			class: "list",
 			if items.is_empty(){
 				span { class: "palcehodler", "Drop files here to add to playlist." }
 			}
-			div { "{dragging().unwrap_or_default()}" }
-			for (idx, item) in items.iter().enumerate() {
-				Item
-				{
-					item: item.clone(),
-					selected: player_ctx.data.selected_file.cloned().map(|s| s == idx).unwrap_or_default(),
-					ondrag: move |e|{
-						dragging.set(Some(idx));
-					}
-				}
+			// for (idx, item) in items.iter().enumerate() {
+			// 	Item
+			// 	{
+			// 		item: item.clone(),
+			// 		selected: player_ctx.data.selected_file.cloned().map(|s| s == idx).unwrap_or_default(),
+			// 		ondrag: move |e|{
+			// 			dragging.set(Some(idx));
+			// 		}
+			// 	}
+			// }
+			DragAndDropList{
+				items
 			}
 		}
 	}
 }
 
 #[component]
-fn Item(item: PlaylistItem, selected: bool, ondrag: EventHandler<DragEvent>) -> Element {
+fn Item(item: PlaylistItem, selected: bool) -> Element {
 	let player_ctx = use_context::<PlayerContext>();
 	let selected_class = if selected { "selected" } else { "" };
-	let on_drag = move |e| {
-		ondrag.call(e);
-	};
+	// let on_drag = move |e| {
+	// 	// ondrag.call(e);
+	// };
 	match item {
 		PlaylistItem::Unloaded { key } => {
 			rsx! {
 				div{
 					class: "playlistItem loading {selected_class}",
-					draggable: true,
-					ondrag: on_drag,
-					ondragstart: on_drag,
 					div{
 						class: "name",
 						{key}
@@ -84,9 +100,6 @@ fn Item(item: PlaylistItem, selected: bool, ondrag: EventHandler<DragEvent>) -> 
 			rsx! {
 				div{
 					class: "playlistItem {selected_class}",
-					draggable: true,
-					ondrag: on_drag,
-					ondragstart: on_drag,
 					onclick: {
 						move |_| {
 							player_ctx.handle.send(PlayerCommand::SelectFile(key.clone()));
@@ -107,9 +120,6 @@ fn Item(item: PlaylistItem, selected: bool, ondrag: EventHandler<DragEvent>) -> 
 			rsx! {
 				div{
 					class: "playlistItem {selected_class}",
-					draggable: true,
-					ondrag: on_drag,
-					ondragstart: on_drag,
 					div{
 						class: "name",
 						{key}

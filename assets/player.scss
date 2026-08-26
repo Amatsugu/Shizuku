@@ -31,7 +31,7 @@ body:has(#player) {
 	background-color: $panelBackgroundColor;
 
 	.list {
-		display: flex;
+		display: block;
 		flex-direction: column;
 		overflow-y: auto;
 		min-height: 100%;
