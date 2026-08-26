@@ -5,8 +5,7 @@ use dioxus::{html::HasFileData, prelude::*};
 use crate::models::toasts::{ToastCommand, ToastLevel, ToastsContext};
 
 #[component]
-pub fn FileDropZone(children: Element, ondrop: Callback<Vec<String>>) -> Element
-{
+pub fn FileDropZone(children: Element, ondrop: Callback<Vec<String>>) -> Element {
 	let mut is_dragging = use_signal(|| false);
 	let on_drag_enter = move |_| {
 		is_dragging.set(true);
@@ -15,14 +14,15 @@ pub fn FileDropZone(children: Element, ondrop: Callback<Vec<String>>) -> Element
 	let toasts_ctx = use_context::<ToastsContext>();
 	let on_files_dropped = move |e: Event<DragData>| {
 		e.prevent_default();
-
-		let files: Vec<String> = e.files().iter().filter_map(|f| f.path().into_string().ok()).collect();
-		if !files.is_empty()
-		{
+		info!("{} Files dropped", e.files().len());
+		let files: Vec<String> = e
+			.files()
+			.iter()
+			.filter_map(|f| f.path().to_str().map(|f| f.to_string()))
+			.collect();
+		if !files.is_empty() {
 			ondrop.call(files);
-		}
-		else
-		{
+		} else {
 			toasts_ctx.handle.send(ToastCommand::PushWithDuration {
 				title: "File drop failed".into(),
 				message: None,
@@ -34,8 +34,7 @@ pub fn FileDropZone(children: Element, ondrop: Callback<Vec<String>>) -> Element
 		is_dragging.set(false);
 	};
 
-	let drag_class = use_memo(move || match is_dragging()
-	{
+	let drag_class = use_memo(move || match is_dragging() {
 		true => "dragging",
 		false => "",
 	});
@@ -48,7 +47,7 @@ pub fn FileDropZone(children: Element, ondrop: Callback<Vec<String>>) -> Element
 			ondragover: on_drag_enter,
 			ondragstart: on_drag_enter,
 			onmouseup: move |_|{ is_dragging.set(false); },
-			input { type: "file" },
+			input { type: "file", multiple: true },
 			div{
 				class: "inner",
 				{children}

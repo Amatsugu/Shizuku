@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use dioxus::prelude::*;
 
 use crate::{
@@ -9,8 +11,7 @@ use crate::{
 };
 
 #[component]
-pub fn Playlist() -> Element
-{
+pub fn Playlist() -> Element {
 	let player_ctx = use_context::<PlayerContext>();
 	rsx! {
 		div{
@@ -28,32 +29,34 @@ pub fn Playlist() -> Element
 }
 
 #[component]
-fn ItemList(items: Vec<PlaylistItem>) -> Element
-{
+fn ItemList(items: Vec<PlaylistItem>) -> Element {
+	let player_ctx = use_context::<PlayerContext>();
 	rsx! {
 		div{
 			class: "list",
 			if items.is_empty(){
 				span { class: "palcehodler", "Drop files here to add to playlist." }
 			}
-			for item in items {
-				Item { item }
+			for (idx, item) in items.iter().enumerate() {
+				Item
+				{
+					item: item.clone(),
+					selected: player_ctx.data.selected_file.cloned().map(|s| s == idx).unwrap_or_default()
+				}
 			}
 		}
 	}
 }
 
 #[component]
-fn Item(item: PlaylistItem) -> Element
-{
+fn Item(item: PlaylistItem, selected: bool) -> Element {
 	let player_ctx = use_context::<PlayerContext>();
-	match item
-	{
-		PlaylistItem::Unloaded { key } =>
-		{
+	let selected_class = if selected { "selected" } else { "" };
+	match item {
+		PlaylistItem::Unloaded { key } => {
 			rsx! {
 				div{
-					class: "playlistItem loading",
+					class: "playlistItem loading {selected_class}",
 					div{
 						class: "name",
 						{key}
@@ -65,12 +68,11 @@ fn Item(item: PlaylistItem) -> Element
 				}
 			}
 		}
-		PlaylistItem::Loaded { key, meta } =>
-		{
+		PlaylistItem::Loaded { key, meta } => {
 			let display = key.clone();
 			rsx! {
 				div{
-					class: "playlistItem",
+					class: "playlistItem {selected_class}",
 					onclick: {
 						move |_| {
 							player_ctx.handle.send(PlayerCommand::SelectFile(key.clone()));
@@ -82,16 +84,15 @@ fn Item(item: PlaylistItem) -> Element
 					}
 					div{
 						class: "info",
-						"{meta.duration.as_secs()} seconds"
+						"{to_duration_string(meta.duration)} seconds"
 					}
 				}
 			}
 		}
-		PlaylistItem::NotFound { key } =>
-		{
+		PlaylistItem::NotFound { key } => {
 			rsx! {
 				div{
-					class: "playlistItem",
+					class: "playlistItem {selected_class}",
 					div{
 						class: "name",
 						{key}
@@ -103,5 +104,25 @@ fn Item(item: PlaylistItem) -> Element
 				}
 			}
 		}
+	}
+}
+
+fn to_duration_string(duration: Duration) -> String {
+	match duration {
+		d if d.as_secs() < 60 => format!("0:{}", d.as_secs()),
+		d if d.as_secs() < 60 * 60 => {
+			let s = d.as_secs();
+			let m = s / 60;
+			format!("{}:{}", m, s - (m * 60))
+		}
+		d if d.as_secs() < 60 * 60 * 60 => {
+			let mut s = d.as_secs();
+			let h = s / (60 * 60);
+			s -= h * 60 * 60;
+			let m = s / 60;
+			s -= m * 60;
+			format!("{}:{}:{}", h, m, s)
+		}
+		_ => "".into(),
 	}
 }

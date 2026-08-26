@@ -1,41 +1,73 @@
 @import "theme.scss";
 
-body:has(#player){
+body:has(#player) {
 	margin: 0;
 	padding: 0;
+	display: grid;
 }
 
-#player{
+#player {
 	display: grid;
 	grid-template-areas: "Users" "Playlist" "Controls";
-	grid-template-rows: 40px 1fr 30px;
-	height: 100mvh;
-	width: 100mvw;
+	grid-template-rows: 40px 1fr 40px;
+	height: 100dvh;
+	width: 100dvw;
 
-	#users{
+	#users {
 		grid-area: Users;
 	}
 
-	#playerControls{
+	#playerControls {
 		grid-area: Controls;
 	}
 
-	#playlist{
+	#playlist {
 		grid-area: Playlist;
 	}
 }
 
-
-#playlist{
+#playlist {
 	display: grid;
+	background-color: $panelBackgroundColor;
 
-	> .list{
+	.list {
 		display: flex;
 		flex-direction: column;
 		overflow-y: auto;
+		min-height: 100%;
+		user-select: none;
 
-		.playlistItem{
-			background-color: $mainColor;
+		.playlistItem {
+			display: grid;
+			grid-template-columns: 1fr auto;
+			padding: 5px;
+			background-color: $itemColor1;
+			border-left: 0;
+			transition:
+				background-color 0.25s ease-out,
+				border-left 0.25s ease-out;
+			cursor: pointer;
+
+			&:hover {
+				background-color: $itemColor1Hover;
+			}
+
+			&:nth-child(2n) {
+				background-color: $itemColor2;
+				&:hover {
+					background-color: $itemColor2Hover;
+				}
+			}
+
+			.info {
+				display: flex;
+				align-items: center;
+				text-align: right;
+			}
+
+			&.selected {
+				border-left: 8px solid $featureColor;
+			}
 		}
 	}
 }
