@@ -31,17 +31,22 @@ pub fn Playlist() -> Element {
 #[component]
 fn ItemList(items: Vec<PlaylistItem>) -> Element {
 	let player_ctx = use_context::<PlayerContext>();
+	let mut dragging = use_signal(|| Option::<usize>::None);
 	rsx! {
 		div{
 			class: "list",
 			if items.is_empty(){
 				span { class: "palcehodler", "Drop files here to add to playlist." }
 			}
+			div { "{dragging().unwrap_or_default()}" }
 			for (idx, item) in items.iter().enumerate() {
 				Item
 				{
 					item: item.clone(),
-					selected: player_ctx.data.selected_file.cloned().map(|s| s == idx).unwrap_or_default()
+					selected: player_ctx.data.selected_file.cloned().map(|s| s == idx).unwrap_or_default(),
+					ondrag: move |e|{
+						dragging.set(Some(idx));
+					}
 				}
 			}
 		}
@@ -49,14 +54,20 @@ fn ItemList(items: Vec<PlaylistItem>) -> Element {
 }
 
 #[component]
-fn Item(item: PlaylistItem, selected: bool) -> Element {
+fn Item(item: PlaylistItem, selected: bool, ondrag: EventHandler<DragEvent>) -> Element {
 	let player_ctx = use_context::<PlayerContext>();
 	let selected_class = if selected { "selected" } else { "" };
+	let on_drag = move |e| {
+		ondrag.call(e);
+	};
 	match item {
 		PlaylistItem::Unloaded { key } => {
 			rsx! {
 				div{
 					class: "playlistItem loading {selected_class}",
+					draggable: true,
+					ondrag: on_drag,
+					ondragstart: on_drag,
 					div{
 						class: "name",
 						{key}
@@ -73,6 +84,9 @@ fn Item(item: PlaylistItem, selected: bool) -> Element {
 			rsx! {
 				div{
 					class: "playlistItem {selected_class}",
+					draggable: true,
+					ondrag: on_drag,
+					ondragstart: on_drag,
 					onclick: {
 						move |_| {
 							player_ctx.handle.send(PlayerCommand::SelectFile(key.clone()));
@@ -93,6 +107,9 @@ fn Item(item: PlaylistItem, selected: bool) -> Element {
 			rsx! {
 				div{
 					class: "playlistItem {selected_class}",
+					draggable: true,
+					ondrag: on_drag,
+					ondragstart: on_drag,
 					div{
 						class: "name",
 						{key}

@@ -45,9 +45,7 @@ pub fn FileDropZone(children: Element, ondrop: Callback<Vec<String>>) -> Element
 			ondrop: on_files_dropped,
 			ondragenter: on_drag_enter,
 			ondragover: on_drag_enter,
-			ondragstart: on_drag_enter,
 			onmouseup: move |_|{ is_dragging.set(false); },
-			input { type: "file", multiple: true },
 			div{
 				class: "inner",
 				{children}
