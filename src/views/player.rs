@@ -10,13 +10,11 @@ use crate::{
 	components::player::{PlayerControls, Playlist, UserList},
 	models::{
 		config_file::{ConfigContext, ConfigFile},
-		player_context::{PlayerContext, PlayerData},
+		player_context::PlayerData,
 		playlist::{MediaMetadata, PlaylistItem},
 	},
 	route::Route,
 };
-
-const PLAYER_CSS: Asset = asset!("/assets/player.scss");
 
 #[component]
 pub fn Player() -> Element
@@ -26,8 +24,8 @@ pub fn Player() -> Element
 
 	let player_ctx = init_player_context(mpv_path);
 	let player_ctx = use_context_provider(|| player_ctx);
-
 	init_file_scan(config, player_ctx.data);
+
 	use_effect(move || {
 		if !player_ctx.data.is_running.cloned()
 		{
@@ -36,7 +34,6 @@ pub fn Player() -> Element
 	});
 
 	rsx! {
-		document::Link { rel: "stylesheet", href: PLAYER_CSS }
 		div{
 			id: "player",
 			PlayerControls{}

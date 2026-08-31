@@ -11,7 +11,8 @@ use crate::{
 };
 
 #[component]
-pub fn Playlist() -> Element {
+pub fn Playlist() -> Element
+{
 	let player_ctx = use_context::<PlayerContext>();
 	rsx! {
 		div{
@@ -29,12 +30,16 @@ pub fn Playlist() -> Element {
 }
 
 #[component]
-fn ItemList(items: Vec<PlaylistItem>) -> Element {
+fn ItemList(items: Vec<PlaylistItem>) -> Element
+{
 	let player_ctx = use_context::<PlayerContext>();
 	let mut dragging = use_signal(|| Option::<usize>::None);
 	rsx! {
 		div{
 			class: "list",
+			ondrop: |e|{
+				dbg!(e.data().coordinates());
+			},
 			if items.is_empty(){
 				span { class: "palcehodler", "Drop files here to add to playlist." }
 			}
@@ -44,7 +49,7 @@ fn ItemList(items: Vec<PlaylistItem>) -> Element {
 				{
 					item: item.clone(),
 					selected: player_ctx.data.selected_file.cloned().map(|s| s == idx).unwrap_or_default(),
-					ondrag: move |e|{
+					ondrag: move |_e|{
 						dragging.set(Some(idx));
 					}
 				}
@@ -54,14 +59,17 @@ fn ItemList(items: Vec<PlaylistItem>) -> Element {
 }
 
 #[component]
-fn Item(item: PlaylistItem, selected: bool, ondrag: EventHandler<DragEvent>) -> Element {
+fn Item(item: PlaylistItem, selected: bool, ondrag: EventHandler<DragEvent>) -> Element
+{
 	let player_ctx = use_context::<PlayerContext>();
 	let selected_class = if selected { "selected" } else { "" };
 	let on_drag = move |e| {
 		ondrag.call(e);
 	};
-	match item {
-		PlaylistItem::Unloaded { key } => {
+	match item
+	{
+		PlaylistItem::Unloaded { key } =>
+		{
 			rsx! {
 				div{
 					class: "playlistItem loading {selected_class}",
@@ -79,7 +87,8 @@ fn Item(item: PlaylistItem, selected: bool, ondrag: EventHandler<DragEvent>) -> 
 				}
 			}
 		}
-		PlaylistItem::Loaded { key, meta } => {
+		PlaylistItem::Loaded { key, meta } =>
+		{
 			let display = key.clone();
 			rsx! {
 				div{
@@ -103,7 +112,8 @@ fn Item(item: PlaylistItem, selected: bool, ondrag: EventHandler<DragEvent>) -> 
 				}
 			}
 		}
-		PlaylistItem::NotFound { key } => {
+		PlaylistItem::NotFound { key } =>
+		{
 			rsx! {
 				div{
 					class: "playlistItem {selected_class}",
@@ -124,15 +134,19 @@ fn Item(item: PlaylistItem, selected: bool, ondrag: EventHandler<DragEvent>) -> 
 	}
 }
 
-fn to_duration_string(duration: Duration) -> String {
-	match duration {
+fn to_duration_string(duration: Duration) -> String
+{
+	match duration
+	{
 		d if d.as_secs() < 60 => format!("0:{}", d.as_secs()),
-		d if d.as_secs() < 60 * 60 => {
+		d if d.as_secs() < 60 * 60 =>
+		{
 			let s = d.as_secs();
 			let m = s / 60;
 			format!("{}:{}", m, s - (m * 60))
 		}
-		d if d.as_secs() < 60 * 60 * 60 => {
+		d if d.as_secs() < 60 * 60 * 60 =>
+		{
 			let mut s = d.as_secs();
 			let h = s / (60 * 60);
 			s -= h * 60 * 60;

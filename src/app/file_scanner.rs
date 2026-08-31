@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use jwalk::WalkDir;
 
-const MEDIA_TYPES: &[&str] = &["mp4", "mkv", "mov", "webm", "avi"];
+pub const MEDIA_TYPES: &[&str] = &["mp4", "mkv", "mov", "webm", "avi"];
 
 pub async fn scan_dirs(media_dirs: Vec<String>) -> Vec<PathBuf>
 {
