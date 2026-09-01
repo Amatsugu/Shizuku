@@ -24,9 +24,9 @@ pub async fn handle_playback_commands(
 {
 	let result = match cmd
 	{
-		PlayerCommand::AddFile(path) =>
+		PlayerCommand::AddFile(path, idx) =>
 		{
-			handle_file_add(path, mpv, player_data.playlist, player_data.selected_file).await
+			handle_file_add(path, idx, mpv, player_data.playlist, player_data.selected_file).await
 		}
 		PlayerCommand::SelectFile(key) =>
 		{
@@ -50,7 +50,7 @@ pub async fn handle_playback_commands(
 async fn handle_select_file(
 	key: String,
 	mpv: &mut Mpv,
-	playlist: Signal<Vec<PlaylistItem>>,
+	mut playlist: Signal<Vec<PlaylistItem>>,
 	mut selected: Signal<Option<usize>>,
 ) -> Result<(), String>
 {
@@ -61,8 +61,13 @@ async fn handle_select_file(
 	{
 		return Err("Failed to find matching playlist item".into());
 	};
-	if let PlaylistItem::Loaded { meta, .. } = playlist_item
+	if let PlaylistItem::Loaded { meta, key } = playlist_item
 	{
+		if !meta.path.exists()
+		{
+			playlist.write()[idx] = PlaylistItem::NotFound { key: key.clone() };
+			return Err("File no longer exists".into());
+		}
 		mpv.open_file(meta.path.as_path()).await?;
 		selected.set(Some(idx));
 		Ok(())
@@ -75,6 +80,7 @@ async fn handle_select_file(
 
 async fn handle_file_add(
 	path: String,
+	index: usize,
 	mpv: &mut Mpv,
 	mut playlist: Signal<Vec<PlaylistItem>>,
 	mut selected: Signal<Option<usize>>,
@@ -95,7 +101,7 @@ async fn handle_file_add(
 	if !playlist.read().iter().any(|l| l.key_matches(&filename))
 	{
 		let idx = playlist.read().len();
-		playlist.write().push(PlaylistItem::Unloaded { key: filename });
+		playlist.write().insert(index, PlaylistItem::Unloaded { key: filename });
 		if selected.read().is_none()
 		{
 			mpv.open_file(path).await?;

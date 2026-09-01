@@ -22,7 +22,7 @@ pub struct PlayerData
 pub enum PlayerCommand
 {
 	SelectFile(String),
-	AddFile(String),
+	AddFile(String, usize),
 	Play,
 	Pause,
 	Seek(u64),
