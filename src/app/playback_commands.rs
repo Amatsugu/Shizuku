@@ -100,12 +100,11 @@ async fn handle_file_add(
 
 	if !playlist.read().iter().any(|l| l.key_matches(&filename))
 	{
-		let idx = playlist.read().len();
 		playlist.write().insert(index, PlaylistItem::Unloaded { key: filename });
 		if selected.read().is_none()
 		{
 			mpv.open_file(path).await?;
-			selected.set(Some(idx));
+			selected.set(Some(index));
 		}
 	}
 
