@@ -1,17 +1,25 @@
 use dioxus::prelude::*;
 
-use crate::route::Route;
+use crate::{
+	components::icons::{Cog, Stack},
+	route::Route,
+};
 
 #[component]
 pub fn NavBar() -> Element {
 	rsx! {
-		Link {
-			to: Route::Home {  },
-			"Home"
-		}
-		Link {
-			to: Route::Config {  },
-			"Config"
+		nav {
+
+			Link {
+				to: Route::Home {  },
+				Stack {}
+				"Home"
+			}
+			Link {
+				to: Route::Config {  },
+				Cog {}
+				"Config"
+			}
 		}
 	}
 }

@@ -41,25 +41,7 @@ pub fn init_player_context(mpv_path: Memo<Result<PathBuf, String>>) -> PlayerCon
 	let toasts_ctx = use_context::<ToastsContext>();
 	let mut data = PlayerData {
 		is_running: use_signal(|| true),
-		playlist: use_signal(|| {
-			vec![
-				PlaylistItem::NotFound {
-					key: "test1.mp4".into(),
-				},
-				PlaylistItem::NotFound {
-					key: "test2.mp4".into(),
-				},
-				PlaylistItem::NotFound {
-					key: "test3.mp4".into(),
-				},
-				PlaylistItem::NotFound {
-					key: "test4.mp4".into(),
-				},
-				PlaylistItem::NotFound {
-					key: "test5.mp4".into(),
-				},
-			]
-		}),
+		playlist: use_signal(Vec::new),
 		users: use_signal(Vec::new),
 		selected_file: use_signal(|| None),
 	};

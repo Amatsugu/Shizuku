@@ -1,4 +1,7 @@
-use dioxus::prelude::*;
+use dioxus::{
+	desktop::{Config, LogicalSize, WindowBuilder},
+	prelude::*,
+};
 
 use crate::{components::basic::Button, models::config_file::ConfigContext, route::Route};
 mod app;
@@ -9,22 +12,25 @@ mod route;
 mod views;
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
-const MAIN_CSS: Asset = asset!("/assets/main.scss");
+const BASE_CSS: Asset = asset!("/assets/base.scss");
 pub const CONFIG_PATH: &str = "config.toml";
 
-fn main()
-{
-	dioxus::launch(App);
+fn main() {
+	let window = WindowBuilder::new()
+		.with_title("Shizuku")
+		.with_inner_size(LogicalSize::new(400.0, 400.0));
+	LaunchBuilder::desktop()
+		.with_cfg(Config::default().with_window(window))
+		.launch(App);
 }
 
 #[component]
-fn App() -> Element
-{
+fn App() -> Element {
 	let mut cfg = use_context_provider(ConfigContext::load_or_create_config_file);
 
 	rsx! {
 		document::Link { rel: "icon", href: FAVICON }
-		document::Link { rel: "stylesheet", href: MAIN_CSS }
+		document::Link { rel: "stylesheet", href: BASE_CSS }
 
 		match cfg.load_state.cloned() {
 			models::config_file::ConfigLoadState::Failed(msg) => rsx!{

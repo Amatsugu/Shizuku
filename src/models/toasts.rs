@@ -3,23 +3,19 @@ use std::time::Duration;
 use dioxus::prelude::*;
 
 #[derive(Clone, PartialEq, Copy)]
-pub struct ToastsContext
-{
+pub struct ToastsContext {
 	pub toasts: Signal<Vec<ToastEntry>>,
 	pub handle: Coroutine<ToastCommand>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ToastCommand
-{
-	Push
-	{
+pub enum ToastCommand {
+	Push {
 		title: String,
 		message: Option<String>,
 		level: ToastLevel,
 	},
-	PushWithDuration
-	{
+	PushWithDuration {
 		title: String,
 		message: Option<String>,
 		level: ToastLevel,
@@ -30,8 +26,7 @@ pub enum ToastCommand
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]
-pub struct ToastEntry
-{
+pub struct ToastEntry {
 	pub id: usize,
 	pub title: String,
 	pub message: Option<String>,
@@ -40,21 +35,18 @@ pub struct ToastEntry
 	pub duration: Option<Duration>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Default, Clone, PartialEq)]
-pub enum ToastLevel
-{
+pub enum ToastLevel {
 	#[default]
 	Info,
 	Warning,
 	Error,
 }
 
-impl ToastLevel
-{
-	pub fn as_class(&self) -> String
-	{
-		match self
-		{
+impl ToastLevel {
+	pub fn as_class(&self) -> String {
+		match self {
 			ToastLevel::Info => "info",
 			ToastLevel::Warning => "warn",
 			ToastLevel::Error => "error",

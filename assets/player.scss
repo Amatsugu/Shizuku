@@ -1,11 +1,5 @@
 @import "theme.scss";
 
-body:has(#player) {
-	margin: 0;
-	padding: 0;
-	display: grid;
-}
-
 #player {
 	display: grid;
 	grid-template-areas: "Users" "Playlist" "Controls";
@@ -37,8 +31,6 @@ body:has(#player) {
 		min-height: 100%;
 		user-select: none;
 
-
-
 		.playlistItem {
 			display: grid;
 			grid-template-columns: 1fr auto;
@@ -50,7 +42,7 @@ body:has(#player) {
 				border-left 0.25s ease-out;
 			cursor: pointer;
 
-			&.placeholder{
+			&.placeholder {
 				opacity: 0.5;
 			}
 			&:hover {
@@ -75,7 +67,7 @@ body:has(#player) {
 			}
 		}
 
-		.dropMarker{
+		.dropMarker {
 			border-top: 2px solid $featureColor;
 		}
 	}

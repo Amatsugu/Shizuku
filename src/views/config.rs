@@ -6,7 +6,7 @@ use crate::{
 	CONFIG_PATH,
 	components::{
 		ServersEditor,
-		basic::{Button, Input, InputValue},
+		basic::{Button, Input, InputValue, Panel},
 	},
 	models::{
 		config_file::ConfigContext,
@@ -15,16 +15,14 @@ use crate::{
 };
 
 #[component]
-pub fn Config() -> Element
-{
+pub fn Config() -> Element {
 	let mut ctx = use_context::<ConfigContext>();
 	let mut cfg = ctx.config;
 	let toast_ctx = use_context::<ToastsContext>();
 	let dirs_text = use_memo(move || cfg.cloned().media_dirs.join("\n"));
 	let mpv_path = use_memo(move || cfg.cloned().mpv_path.unwrap_or_default());
 	rsx! {
-		div {
-			class: "configForm",
+		Panel {
 			h2 { "Media Player" }
 			Input {
 				label: "MPV path",
