@@ -8,7 +8,6 @@ use crate::{
 	app::{mpv::Mpv, mpv_read::handle_mpv_read, playback_commands::handle_playback_commands},
 	models::{
 		player_context::{PlayerCommand, PlayerContext, PlayerData},
-		playlist::PlaylistItem,
 		toasts::{ToastCommand, ToastsContext},
 	},
 };
@@ -52,22 +51,24 @@ pub fn init_player_context(mpv_path: Memo<Result<PathBuf, String>>) -> PlayerCon
 				let mpv_path = match mpv_path {
 					Ok(path) => path,
 					Err(err) => {
-						toasts_ctx.handle.send(ToastCommand::Push {
-							title: "MPV path not set".into(),
-							message: Some(err.to_string()),
-							level: crate::models::toasts::ToastLevel::Error,
-						});
+						toasts_ctx
+							.handle
+							.send(ToastCommand::push_error_with_message(
+								"MPV path not set",
+								err.to_string(),
+							));
 						return;
 					}
 				};
 				let mut mpv = match Mpv::start(mpv_path).await {
 					Ok(mpv) => mpv,
 					Err(err) => {
-						toasts_ctx.handle.send(ToastCommand::Push {
-							title: "Could not start mpv".into(),
-							message: Some(err.to_string()),
-							level: crate::models::toasts::ToastLevel::Error,
-						});
+						toasts_ctx
+							.handle
+							.send(ToastCommand::push_error_with_message(
+								"Could not start mpv",
+								err.to_string(),
+							));
 						return;
 					}
 				};

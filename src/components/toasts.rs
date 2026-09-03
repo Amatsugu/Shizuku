@@ -7,8 +7,7 @@ use crate::{
 };
 
 #[component]
-pub fn ToastsDisplay() -> Element
-{
+pub fn ToastsDisplay() -> Element {
 	let ctx = use_context::<ToastsContext>();
 	rsx! {
 		div{
@@ -24,15 +23,11 @@ pub fn ToastsDisplay() -> Element
 }
 
 #[component]
-pub fn Toast(toast: ToastEntry) -> Element
-{
+pub fn Toast(toast: ToastEntry) -> Element {
 	let ctx = use_context::<ToastsContext>();
-	let slide_out: String = if toast.is_dismissing
-	{
+	let slide_out: String = if toast.is_dismissing {
 		"animation-name: toastSlideOut;".into()
-	}
-	else
-	{
+	} else {
 		"animation-name: toastSlideIn;".into()
 	};
 
@@ -70,33 +65,27 @@ pub fn Toast(toast: ToastEntry) -> Element
 	}
 }
 
-pub fn init_toasts() -> ToastsContext
-{
+pub fn init_toasts() -> ToastsContext {
 	let toasts = use_signal(Vec::<ToastEntry>::new);
 	let handle = use_coroutine(move |mut rx: UnboundedReceiver<ToastCommand>| {
 		let mut toasts = toasts;
 		async move {
 			let mut next_id = 0_usize;
 			let mut timers = FuturesUnordered::new();
-			loop
-			{
+			loop {
 				tokio::select! {
 					Some(cmd) = rx.next() =>{
 						match cmd{
-							ToastCommand::Push { title, message, level } =>{
+							ToastCommand::Push { title, message, level, duration } =>{
 								let id = next_id;
 								next_id += 1;
-								toasts.write().push(ToastEntry { id, title, message, level, ..Default::default() });
-
-							}
-							ToastCommand::PushWithDuration { title, message, level, duration } => {
-								let id = next_id;
-								next_id += 1;
-								toasts.write().push(ToastEntry { id, title, message, level, duration: Some(duration), ..Default::default() });
-								timers.push(async move {
-									tokio::time::sleep(duration).await;
-									id
-								});
+								toasts.write().push(ToastEntry { id, title, message, level, duration, ..Default::default() });
+								if let Some(duration) = duration {
+									timers.push(async move {
+										tokio::time::sleep(duration).await;
+										id
+									});
+								}
 							}
 							ToastCommand::Dismiss(id) => {
 								if let Some(toast) = toasts.write().iter_mut().find(|t| t.id == id){

@@ -14,15 +14,90 @@ pub enum ToastCommand {
 		title: String,
 		message: Option<String>,
 		level: ToastLevel,
-	},
-	PushWithDuration {
-		title: String,
-		message: Option<String>,
-		level: ToastLevel,
-		duration: Duration,
+		duration: Option<Duration>,
 	},
 	Dismiss(usize),
 	Remove(usize),
+}
+
+#[allow(dead_code)]
+impl ToastCommand {
+	pub fn push_info(title: impl Into<String>) -> ToastCommand {
+		ToastCommand::Push {
+			title: title.into(),
+			message: None,
+			level: ToastLevel::Info,
+			duration: None,
+		}
+	}
+
+	pub fn push_info_with_message(
+		title: impl Into<String>,
+		message: impl Into<String>,
+	) -> ToastCommand {
+		ToastCommand::Push {
+			title: title.into(),
+			message: Some(message.into()),
+			level: ToastLevel::Info,
+			duration: None,
+		}
+	}
+
+	pub fn push_warning(title: impl Into<String>) -> ToastCommand {
+		ToastCommand::Push {
+			title: title.into(),
+			message: None,
+			level: ToastLevel::Warning,
+			duration: None,
+		}
+	}
+
+	pub fn push_warning_with_message(
+		title: impl Into<String>,
+		message: impl Into<String>,
+	) -> ToastCommand {
+		ToastCommand::Push {
+			title: title.into(),
+			message: Some(message.into()),
+			level: ToastLevel::Warning,
+			duration: None,
+		}
+	}
+
+	pub fn push_error(title: impl Into<String>) -> ToastCommand {
+		ToastCommand::Push {
+			title: title.into(),
+			message: None,
+			level: ToastLevel::Error,
+			duration: None,
+		}
+	}
+
+	pub fn push_error_with_message(
+		title: impl Into<String>,
+		message: impl Into<String>,
+	) -> ToastCommand {
+		ToastCommand::Push {
+			title: title.into(),
+			message: Some(message.into()),
+			level: ToastLevel::Error,
+			duration: None,
+		}
+	}
+
+	pub fn with_duration(mut self, duration: Duration) -> Self {
+		if let ToastCommand::Push { duration: d, .. } = &mut self {
+			*d = Some(duration);
+		}
+		self
+	}
+
+	pub fn with_message(mut self, message: String) -> Self {
+		if let ToastCommand::Push { message: m, .. } = &mut self {
+			*m = Some(message);
+		}
+		self
+	}
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]

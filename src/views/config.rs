@@ -10,7 +10,7 @@ use crate::{
 	},
 	models::{
 		config_file::ConfigContext,
-		toasts::{ToastCommand, ToastLevel, ToastsContext},
+		toasts::{ToastCommand, ToastsContext},
 	},
 };
 
@@ -58,9 +58,9 @@ pub fn Config() -> Element {
 				Button {
 					onclick: move |_|{
 						if let Err(err) = cfg.cloned().save_config(CONFIG_PATH){
-							toast_ctx.handle.send(ToastCommand::Push { title: "Failed to Save Config".into(), message: Some(err), level: ToastLevel::Error });
+							toast_ctx.handle.send(ToastCommand::push_error_with_message("Failed to Save Config",err));
 						}else{
-							toast_ctx.handle.send(ToastCommand::PushWithDuration { title: "Config saved".into(), message: None, level: ToastLevel::Info, duration: Duration::from_secs(5) });
+							toast_ctx.handle.send(ToastCommand::push_info("Config saved").with_duration(Duration::from_secs(5)));
 						}
 					},
 					"Save"
@@ -69,7 +69,7 @@ pub fn Config() -> Element {
 				Button {
 					onclick: move |_|{
 						ctx.reload_config();
-						toast_ctx.handle.send(ToastCommand::PushWithDuration { title: "Config reloaded".into(), message: None, level: ToastLevel::Info, duration: Duration::from_secs(5) });
+						toast_ctx.handle.send(ToastCommand::push_info("Config reloaded").with_duration(Duration::from_secs(5)));
 					},
 					"Reload Config"
 				}

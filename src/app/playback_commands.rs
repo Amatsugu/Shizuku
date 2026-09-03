@@ -11,7 +11,7 @@ use crate::{
 		mpv::commands::MpvCommand,
 		player_context::{PlayerCommand, PlayerData},
 		playlist::PlaylistItem,
-		toasts::{ToastCommand, ToastLevel, ToastsContext},
+		toasts::{ToastCommand, ToastsContext},
 	},
 };
 
@@ -20,30 +20,33 @@ pub async fn handle_playback_commands(
 	mpv: &mut Mpv,
 	toasts_ctx: ToastsContext,
 	player_data: PlayerData,
-)
-{
-	let result = match cmd
-	{
-		PlayerCommand::AddFile(path, idx) =>
-		{
-			handle_file_add(path, idx, mpv, player_data.playlist, player_data.selected_file).await
+) {
+	let result = match cmd {
+		PlayerCommand::AddFile(path, idx) => {
+			handle_file_add(
+				path,
+				idx,
+				mpv,
+				player_data.playlist,
+				player_data.selected_file,
+			)
+			.await
 		}
-		PlayerCommand::SelectFile(key) =>
-		{
+		PlayerCommand::SelectFile(key) => {
 			handle_select_file(key, mpv, player_data.playlist, player_data.selected_file).await
 		}
 		PlayerCommand::Play => mpv.send_command(MpvCommand::play()).await,
 		PlayerCommand::Pause => mpv.send_command(MpvCommand::pause()).await,
 		PlayerCommand::Seek(time) => mpv.send_command(MpvCommand::seek(time)).await,
 	};
-	if let Err(err) = result
-	{
-		toasts_ctx.handle.send(ToastCommand::PushWithDuration {
-			title: "Failed to communicate with mpv".into(),
-			message: Some(err.to_string()),
-			level: ToastLevel::Error,
-			duration: Duration::from_secs(5),
-		});
+	if let Err(err) = result {
+		toasts_ctx.handle.send(
+			ToastCommand::push_error_with_message(
+				"Failed to communicate with mpv",
+				err.to_string(),
+			)
+			.with_duration(Duration::from_secs(5)),
+		);
 	}
 }
 
@@ -52,28 +55,25 @@ async fn handle_select_file(
 	mpv: &mut Mpv,
 	mut playlist: Signal<Vec<PlaylistItem>>,
 	mut selected: Signal<Option<usize>>,
-) -> Result<(), String>
-{
+) -> Result<(), String> {
 	info!("Select: {}", key);
 	let list = playlist.cloned();
-	let Some((idx, playlist_item)) = list.iter().enumerate().find(|(_, itm)| itm.key_matches(&key))
-	else
-	{
+	let Some((idx, playlist_item)) = list
+		.iter()
+		.enumerate()
+		.find(|(_, itm)| itm.key_matches(&key))
+	else {
 		return Err("Failed to find matching playlist item".into());
 	};
-	if let PlaylistItem::Loaded { meta, key } = playlist_item
-	{
-		if !meta.path.exists()
-		{
+	if let PlaylistItem::Loaded { meta, key } = playlist_item {
+		if !meta.path.exists() {
 			playlist.write()[idx] = PlaylistItem::NotFound { key: key.clone() };
 			return Err("File no longer exists".into());
 		}
 		mpv.open_file(meta.path.as_path()).await?;
 		selected.set(Some(idx));
 		Ok(())
-	}
-	else
-	{
+	} else {
 		Err("Playlist item not found on local file system".into())
 	}
 }
@@ -84,25 +84,24 @@ async fn handle_file_add(
 	mpv: &mut Mpv,
 	mut playlist: Signal<Vec<PlaylistItem>>,
 	mut selected: Signal<Option<usize>>,
-) -> Result<(), String>
-{
+) -> Result<(), String> {
 	let path = Path::new(&path);
 
-	if !path.exists()
-	{
+	if !path.exists() {
 		return Err("File does not exist".into());
 	}
-	let Some(filename) = path.file_name().and_then(|f| f.to_str().map(|f| f.to_string()))
-	else
-	{
+	let Some(filename) = path
+		.file_name()
+		.and_then(|f| f.to_str().map(|f| f.to_string()))
+	else {
 		return Err("Failed to extract filename".into());
 	};
 
-	if !playlist.read().iter().any(|l| l.key_matches(&filename))
-	{
-		playlist.write().insert(index, PlaylistItem::Unloaded { key: filename });
-		if selected.read().is_none()
-		{
+	if !playlist.read().iter().any(|l| l.key_matches(&filename)) {
+		playlist
+			.write()
+			.insert(index, PlaylistItem::Unloaded { key: filename });
+		if selected.read().is_none() {
 			mpv.open_file(path).await?;
 			selected.set(Some(index));
 		}
