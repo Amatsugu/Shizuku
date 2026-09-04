@@ -7,21 +7,55 @@
 	height: 100dvh;
 	width: 100dvw;
 
-	#users {
-		grid-area: Users;
-	}
-
 	#playerControls {
 		grid-area: Controls;
 	}
+}
 
-	#playlist {
-		grid-area: Playlist;
+#users {
+	grid-area: Users;
+	display: flex;
+	overflow-x: auto;
+	align-items: center;
+	gap: 10px;
+	padding: 0 10px;
+
+	.user {
+		background-color: $featureColor;
+		border-radius: 10px;
+		display: grid;
+		grid-template-columns: auto 1fr;
+		overflow: hidden;
+		color: $invertTextColor;
+
+		> *,
+		&::before {
+			padding: 5px 10px;
+			display: flex;
+			align-items: center;
+		}
+
+		&::before {
+			content: "";
+			display: block;
+			background-color: $unreadyColor;
+			color: $mainTextColor;
+			width: 10px;
+		}
+
+		&.ready::before {
+			background-color: $readyColor;
+		}
+
+		&.me {
+			border: 2px solid $mainColor;
+		}
 	}
 }
 
 #playlist {
 	display: grid;
+	grid-area: Playlist;
 	background-color: $panelBackgroundColor;
 
 	.list {

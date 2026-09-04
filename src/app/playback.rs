@@ -9,6 +9,7 @@ use crate::{
 	models::{
 		player_context::{PlayerCommand, PlayerContext, PlayerData},
 		toasts::{ToastCommand, ToastsContext},
+		user::User,
 	},
 };
 
@@ -36,12 +37,15 @@ pub fn get_mpv_path(configured_path: Option<String>) -> Result<PathBuf, String> 
 	}
 }
 
-pub fn init_player_context(mpv_path: Memo<Result<PathBuf, String>>) -> PlayerContext {
+pub fn init_player_context(
+	mpv_path: Memo<Result<PathBuf, String>>,
+	username: impl Into<String>,
+) -> PlayerContext {
 	let toasts_ctx = use_context::<ToastsContext>();
 	let mut data = PlayerData {
 		is_running: use_signal(|| true),
 		playlist: use_signal(Vec::new),
-		users: use_signal(Vec::new),
+		users: use_signal(|| vec![User::new(username)]),
 		selected_file: use_signal(|| None),
 	};
 	let handle = use_coroutine(
