@@ -15,7 +15,7 @@ const FAVICON: Asset = asset!("/assets/favicon.ico");
 const BASE_CSS: Asset = asset!("/assets/base.scss");
 pub const CONFIG_PATH: &str = "config.toml";
 
-fn main() {
+pub fn init_client() {
 	let window = WindowBuilder::new()
 		.with_title("Shizuku")
 		.with_inner_size(LogicalSize::new(400.0, 400.0));
