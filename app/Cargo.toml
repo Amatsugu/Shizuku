@@ -5,10 +5,10 @@ authors = ["Amatsugu <khamraj@kaisei.app>"]
 edition = "2024"
 
 [dependencies]
-client = { path = "../client" }
-server = { path = "../server" }
+client = { path = "../client", optional = true }
+server = { path = "../server", optional = true }
 
 [features]
 default = ["client"]
-server = []
-client = []
+server = ["dep:server"]
+client = ["dep:client"]
